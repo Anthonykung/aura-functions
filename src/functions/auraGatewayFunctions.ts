@@ -40,10 +40,7 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
         data = JSON.parse(message);
       } catch (error) {
         context.error('Error parsing message:', error);
-        return {
-          success: false,
-          body: 'Error parsing message'
-        };
+        throw new Error('Error parsing message');
       }
     }
     else if (typeof message === 'object') {
@@ -58,19 +55,13 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
     // Check if the message is a valid object
     if (!data || typeof data !== 'object') {
       context.error('Invalid message:', data);
-      return {
-        success: false,
-        body: 'Invalid message'
-      };
+      throw new Error('Invalid message');
     }
 
     // Check if data contains the 'op', 'd', 't', and 's' properties
     if (!data.op || !data.d || !data.t || !data.s) {
       context.error('Invalid message properties:', data);
-      return {
-        success: false,
-        body: 'Invalid message properties'
-      };
+      throw new Error('Invalid message properties');
     }
 
     // Conditionally handle the message based on the 'op' property
@@ -88,10 +79,7 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
 
       if (!response.ok) {
         context.error('Error fetching API:', response);
-        return {
-          success: false,
-          body: 'Error fetching API'
-        };
+        throw new Error('Error fetching API');
       }
 
       const responseBody = await response.json();
@@ -111,10 +99,7 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
   }
   catch (error) {
     context.error('Error processing message:', error);
-    return {
-      success: false,
-      body: 'Error processing message'
-    };
+    throw new Error('Error processing message');
   }
 }
 
