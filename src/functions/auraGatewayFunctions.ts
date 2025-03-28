@@ -20,10 +20,15 @@
 
 import { app, InvocationContext, output } from '@azure/functions';
 
+const queueOutput = output.serviceBusQueue({
+  queueName: 'aura-gateway-receiver',
+  connection: 'ascabus_SERVICEBUS'
+});
+
 export async function auraGatewayFunctions(message: unknown, context: InvocationContext): Promise<{
   success: boolean;
   body: any;
-}> {
+} | void> {
   context.log('Service bus queue function processed message:', message);
 
   try {
@@ -85,16 +90,22 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
       const responseBody = await response.json();
       context.log('API response:', responseBody);
 
-      // Send a message to a new queue 'aura-gateway-receiver'
-      const messageToSend = {
-        success: responseBody.success,
-        body: {
-          op: responseBody.op as number,
-          d: responseBody.d,
-        }
-      };
+      if (responseBody.success && responseBody.body && responseBody.body.op && responseBody.body.d) {
+        // Send a message to a new queue 'aura-gateway-receiver'
+        const messageToSend = {
+          success: responseBody.success,
+          body: {
+            op: responseBody.op as number,
+            d: responseBody.d,
+          }
+        };
 
-      return messageToSend;
+        context.extraOutputs.set(queueOutput, messageToSend);
+      }
+      else if (!responseBody.success) {
+        context.error('API response error:', responseBody);
+        throw new Error('API response error');
+      }
     }
   }
   catch (error) {
@@ -106,9 +117,5 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
 app.serviceBusQueue('auraGatewayFunctions', {
   connection: 'ascabus_SERVICEBUS',
   queueName: 'aura-gateway-sender',
-  return: output.serviceBusQueue({
-    queueName: 'aura-gateway-receiver',
-    connection: 'ascabus_SERVICEBUS'
-  }),
   handler: auraGatewayFunctions
 });
