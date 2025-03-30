@@ -31,6 +31,9 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
 } | void> {
   context.log('Service bus queue function processed message:', message);
 
+  context.log('Context:', context);
+  context.log('Trigger metadata:', context.triggerMetadata);
+
   try {
     let data: {
       op: number;
@@ -73,7 +76,10 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          attempts: context.triggerMetadata.deliveryCount,
+          data: data,
+        }),
       });
 
       if (!response.ok) {
