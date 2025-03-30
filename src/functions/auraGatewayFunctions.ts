@@ -63,12 +63,6 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
       throw new Error('Invalid message');
     }
 
-    // Check if data contains the 'op', 'd', 't', and 's' properties
-    if (!data.op || !data.d || !data.t || !data.s) {
-      context.error('Invalid message properties:', data);
-      throw new Error('Invalid message properties');
-    }
-
     // Conditionally handle the message based on the 'op' property
     if (data.op === 0) {  // Dispatch
 
@@ -79,7 +73,7 @@ export async function auraGatewayFunctions(message: unknown, context: Invocation
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data.d),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
